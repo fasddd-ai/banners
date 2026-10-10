@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ac:148,136,170}
+
+html,body{
+  width:400px;height:1000px;overflow:hidden;
+  background:transparent;
+  font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== SNOW ===== */
+#snow{
+  position:fixed;inset:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;
+}
+
+/* ===== MENU WRAPPER ===== */
+#menu{
+  position:absolute;top:50%;left:0;width:100%;
+  padding:0 6px;
+  transform:translateY(-50%) translateY(14px) scale(0.97);
+  opacity:0;
+  filter:blur(3px);
+  transition:
+    opacity .3s cubic-bezier(.4,0,.2,1),
+    transform .3s cubic-bezier(.4,0,.2,1),
+    filter .28s cubic-bezier(.4,0,.2,1);
+  z-index:1;
+}
+#menu.open{
+  opacity:1;
+  transform:translateY(-50%) scale(1);
+  filter:blur(0);
+}
+
+/* ===== PANEL ===== */
+.panel{
+  background:rgb(10,10,16);
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(var(--ac),.05);
+  box-shadow:
+    0 16px 48px rgba(0,0,0,.8),
+    0 0 0 1px rgba(0,0,0,.3),
+    inset 0 1px 0 rgba(255,255,255,.015);
+}
+
+/* ===== ACCENT LINES ===== */
+.accent-top{
+  height:2px;
+  background:linear-gradient(90deg,
+    transparent 5%,rgba(var(--ac),.5) 30%,rgba(var(--ac),.5) 70%,transparent 95%);
+}
+.accent-bot{
+  height:2px;
+  background:linear-gradient(90deg,
+    transparent 10%,rgba(var(--ac),.18) 35%,rgba(var(--ac),.18) 65%,transparent 90%);
+}
+
+/* ===== BANNER ===== */
+.banner{
+  position:relative;height:120px;overflow:hidden;
+  background:rgb(14,13,20);
+}
+.banner img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .5s ease;
+}
+.banner img.loaded{opacity:1}
+.banner-text{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  color:rgb(var(--ac));font-size:18px;font-weight:700;
+  letter-spacing:4px;opacity:.5;z-index:1;
+  text-shadow:0 0 20px rgba(var(--ac),.2);
+}
+.banner-fade{
+  position:absolute;bottom:0;left:0;right:0;height:70%;
+  background:linear-gradient(to bottom,transparent 0%,rgb(10,10,16) 100%);
+  pointer-events:none;
+}
+
+/* ===== HEADER ===== */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 20px 8px;
+  border-bottom:1px solid rgba(255,255,255,.035);
+}
+.header .title{
+  font-size:11px;font-weight:700;color:rgb(var(--ac));
+  letter-spacing:2.5px;text-transform:uppercase;
+}
+.header .counter{
+  font-size:10px;color:rgba(255,255,255,.18);
+  font-weight:400;font-variant-numeric:tabular-nums;
+}
+
+/* ===== ITEMS ===== */
+.items-wrap{padding:7px 0;position:relative}
+.item{
+  display:flex;align-items:center;
+  height:40px;padding:0 20px;
+  position:relative;cursor:default;user-select:none;
+  transition:background .18s ease;
+}
+.item.selected{background:rgba(var(--ac),.045)}
+
+/* accent bar */
+.item .bar{
+  position:absolute;left:0;top:50%;
+  width:3px;height:0%;
+  transform:translateY(-50%);
+  background:rgb(var(--ac));
+  border-radius:0 2px 2px 0;
+  transition:height .22s cubic-bezier(.4,0,.2,1),box-shadow .22s ease;
+  box-shadow:none;
+}
+.item.selected .bar{
+  height:55%;
+  box-shadow:0 0 8px rgba(var(--ac),.25),4px 0 8px rgba(var(--ac),.1);
+}
+
+/* label */
+.item .label{
+  flex:1;font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.4);
+  transition:color .18s ease;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.item.selected .label{color:rgba(255,255,255,.95)}
+
+/* submenu arrow */
+.item .arrow{
+  font-size:14px;color:rgba(var(--ac),.18);
+  transition:color .18s ease,transform .18s ease;
+  font-weight:400;line-height:1;margin-left:8px;
+}
+.item.selected .arrow{
+  color:rgba(var(--ac),.85);
+  transform:translateX(3px);
+}
+
+/* toggle */
+.toggle-track{
+  width:32px;height:16px;border-radius:8px;
+  background:rgba(255,255,255,.05);
+  position:relative;flex-shrink:0;margin-left:8px;
+  transition:background .25s ease,box-shadow .25s ease;
+}
+.toggle-track.on{
+  background:rgba(var(--ac),.14);
+  box-shadow:0 0 6px rgba(var(--ac),.08);
+}
+.toggle-knob{
+  position:absolute;top:50%;left:3px;
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(255,255,255,.3);
+  transform:translateY(-50%);
+  transition:left .25s cubic-bezier(.4,0,.2,1),background .25s ease,box-shadow .25s ease;
+}
+.toggle-track.on .toggle-knob{
+  left:19px;background:rgb(var(--ac));
+  box-shadow:0 0 8px rgba(var(--ac),.5);
+}
+
+/* separator */
+.sep{height:14px;display:flex;align-items:center;padding:0 32px}
+.sep-line{flex:1;height:1px;background:rgba(255,255,255,.03)}
+
+/* ===== SCROLLBAR ===== */
+.scroll-track{
+  position:absolute;right:5px;top:10px;bottom:10px;
+  width:3px;background:rgba(255,255,255,.018);
+  border-radius:2px;opacity:0;
+  transition:opacity .25s ease;z-index:2;
+}
+.scroll-track.visible{opacity:1}
+.scroll-thumb{
+  position:absolute;top:0;width:100%;
+  min-height:14px;border-radius:2px;
+  background:rgba(var(--ac),.35);
+  box-shadow:0 0 4px rgba(var(--ac),.12);
+  transition:top .16s cubic-bezier(.4,0,.2,1),height .16s ease;
+}
+
+/* ===== FOOTER ===== */
+.footer{
+  padding:7px 20px 10px;
+  border-top:1px solid rgba(255,255,255,.035);
+  min-height:34px;display:flex;align-items:center;
+}
+.footer .desc{
+  font-size:11px;color:rgba(255,255,255,.25);
+  font-weight:400;line-height:1.4;
+}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<div id="menu">
+  <div class="panel">
+    <div class="accent-top"></div>
+    <div class="banner">
+      <img id="bannerImg" src="" alt="">
+      <div class="banner-text" id="bannerText">LEMON HAZE</div>
+      <div class="banner-fade"></div>
+    </div>
+    <div class="header">
+      <span class="title" id="hTitle"></span>
+      <span class="counter" id="hCounter"></span>
+    </div>
+    <div class="items-wrap" id="itemsWrap">
+      <div class="scroll-track" id="scrollTrack">
+        <div class="scroll-thumb" id="scrollThumb"></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="desc" id="fDesc"></span>
+    </div>
+    <div class="accent-bot"></div>
+  </div>
+</div>
+<script>
+/* ==================== ELEMENTS ==================== */
+var menuEl     = document.getElementById('menu');
+var hTitle     = document.getElementById('hTitle');
+var hCounter   = document.getElementById('hCounter');
+var fDesc      = document.getElementById('fDesc');
+var itemsWrap  = document.getElementById('itemsWrap');
+var bannerImg  = document.getElementById('bannerImg');
+var bannerText = document.getElementById('bannerText');
+var scrollTrack = document.getElementById('scrollTrack');
+var scrollThumb = document.getElementById('scrollThumb');
+var snowCvs    = document.getElementById('snow');
+var sCtx       = snowCvs.getContext('2d');
+
+var isOpen     = false;
+var navEls     = [];
+var curIdx     = -1;
+var navCount   = 0;
+var snowOn     = true;
+
+/* ==================== SNOW ==================== */
+snowCvs.width = 400; snowCvs.height = 1000;
+var flakes = [];
+for(var i=0;i<55;i++){
+  flakes.push({
+    x:Math.random()*420-10, y:Math.random()*1020-10,
+    r:Math.random()*1.5+0.3, sp:Math.random()*0.4+0.08,
+    w:(Math.random()-0.5)*0.12, wb:Math.random()*6.283,
+    wr:Math.random()*0.013+0.003, al:Math.random()*0.28+0.04
+  });
+}
+function snowLoop(){
+  sCtx.clearRect(0,0,400,1000);
+  if(isOpen && snowOn){
+    for(var i=0;i<flakes.length;i++){
+      var f=flakes[i];
+      f.wb+=f.wr; f.y+=f.sp; f.x+=f.w+Math.sin(f.wb)*0.12;
+      if(f.y>1010){f.y=-8;f.x=Math.random()*420-10;}
+      if(f.x>415)f.x=-10; if(f.x<-15)f.x=410;
+      sCtx.beginPath();
+      sCtx.arc(f.x,f.y,f.r,0,6.283);
+      sCtx.fillStyle='rgba(255,255,255,'+f.al+')';
+      sCtx.fill();
+    }
+  }
+  requestAnimationFrame(snowLoop);
+}
+requestAnimationFrame(snowLoop);
+
+/* ==================== BANNER ==================== */
+bannerImg.addEventListener('load',function(){
+  bannerImg.classList.add('loaded');
+  bannerText.style.display='none';
+});
+bannerImg.addEventListener('error',function(){
+  bannerText.style.display='block';
+});
+
+/* ==================== HELPERS ==================== */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ==================== BUILD ITEMS ==================== */
+function buildItems(items){
+  var ch=itemsWrap.children;
+  for(var i=ch.length-1;i>=0;i--){
+    if(ch[i]!==scrollTrack) itemsWrap.removeChild(ch[i]);
+  }
+  navEls=[]; navCount=0;
+
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    if(it.type==='separator'){
+      var s=document.createElement('div');s.className='sep';
+      s.innerHTML='<div class="sep-line"></div>';
+      itemsWrap.insertBefore(s,scrollTrack);
+    }else{
+      var d=document.createElement('div');d.className='item';
+      var h='<div class="bar"></div><span class="label">'+esc(it.label)+'</span>';
+      if(it.type==='submenu') h+='<span class="arrow">›</span>';
+      else if(it.type==='toggle'){
+        h+='<div class="toggle-track'+(it.value?' on':'')+'"><div class="toggle-knob"></div></div>';
+      }
+      d.innerHTML=h;
+      itemsWrap.insertBefore(d,scrollTrack);
+      navEls.push(d); navCount++;
+    }
+  }
+}
+
+/* ==================== SELECTION ==================== */
+function setSel(idx){
+  if(curIdx>=0&&curIdx<navEls.length) navEls[curIdx].classList.remove('selected');
+  curIdx=idx;
+  if(idx>=0&&idx<navEls.length) navEls[idx].classList.add('selected');
+}
+
+/* ==================== TOGGLE ==================== */
+function setToggle(idx,val){
+  if(idx<0||idx>=navEls.length)return;
+  var t=navEls[idx].querySelector('.toggle-track');
+  if(t){if(val)t.classList.add('on');else t.classList.remove('on');}
+}
+
+/* ==================== SCROLLBAR ==================== */
+function updateScroll(idx,total){
+  if(total<=2){scrollTrack.classList.remove('visible');return;}
+  scrollTrack.classList.add('visible');
+  requestAnimationFrame(function(){
+    var tH=scrollTrack.clientHeight;
+    if(tH<=0)return;
+    var thH=Math.max(14,Math.round(tH/total));
+    var maxT=tH-thH;
+    var top=total>1?Math.round((idx/(total-1))*maxT):0;
+    scrollThumb.style.height=thH+'px';
+    scrollThumb.style.top=top+'px';
+  });
+}
+
+/* ==================== THEME ==================== */
+function setTheme(r,g,b){
+  document.documentElement.style.setProperty('--ac',r+','+g+','+b);
+}
+
+/* ==================== LABEL UPDATE ==================== */
+function updateLabel(idx,text){
+  if(idx<0||idx>=navEls.length)return;
+  var lbl=navEls[idx].querySelector('.label');
+  if(lbl) lbl.textContent=text;
+}
+
+/* ==================== MESSAGE HANDLER ==================== */
+window.addEventListener('message',function(e){
+  var d;
+  try{d=JSON.parse(e.data);}catch(x){return;}
+
+  switch(d.a){
+    case 'open':
+      if(d.banner) bannerImg.src=d.banner;
+      if(d.ar!==undefined) setTheme(d.ar,d.ag,d.ab);
+      hTitle.textContent=d.title||'';
+      hCounter.textContent=d.counter||'';
+      fDesc.textContent=d.desc||'';
+      if(d.items){buildItems(d.items);curIdx=-1;setSel(d.idx||0);}
+      updateScroll(d.idx||0,d.total||navCount);
+      isOpen=true;
+      requestAnimationFrame(function(){menuEl.classList.add('open');});
+      break;
+
+    case 'nav':
+      hCounter.textContent=d.counter||'';
+      fDesc.textContent=d.desc||'';
+      setSel(typeof d.idx==='number'?d.idx:0);
+      updateScroll(d.idx||0,d.total||navCount);
+      break;
+
+    case 'enter':
+      hTitle.textContent=d.title||'';
+      hCounter.textContent=d.counter||'';
+      fDesc.textContent=d.desc||'';
+      if(d.items){buildItems(d.items);curIdx=-1;setSel(d.idx||0);}
+      updateScroll(d.idx||0,d.total||navCount);
+      break;
+
+    case 'toggle':
+      setToggle(d.idx,d.value);
+      break;
+
+    case 'label':
+      updateLabel(d.idx,d.text);
+      break;
+
+    case 'theme':
+      if(d.ar!==undefined) setTheme(d.ar,d.ag,d.ab);
+      if(d.banner){
+        bannerImg.classList.remove('loaded');
+        bannerText.style.display='block';
+        bannerImg.src=d.banner;
+      }
+      break;
+
+    case 'snow':
+      snowOn=!!d.value;
+      break;
+
+    case 'close':
+      menuEl.classList.remove('open');
+      isOpen=false;
+      break;
+  }
+});
+</script>
+</body>
+</html>
